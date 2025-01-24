@@ -25,7 +25,7 @@ jobs:
             ubuntu_version: jammy
             cuda_version: 12.4.1
             build_args:
-              BASE_IMAGE=nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+              BASE_IMAGE=jsfillman/slurm-deb-base-mini
 
     steps:
       - name: Harden Runner
