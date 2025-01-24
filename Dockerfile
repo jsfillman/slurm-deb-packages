@@ -40,7 +40,10 @@ RUN apt-get update && \
         zlib1g \
         zlib1g-dev \
         libpmix2 \
-        libpmix-dev
+        libpmix-dev \
+        libmysqlclient-dev:arm64 \
+        dh-autoreconf \
+        m4
 
 # Download Slurm
 RUN cd /usr/src && \
@@ -61,14 +64,11 @@ ENV PATH=$PATH:/usr/mpi/gcc/openmpi-${OPENMPI_VERSION}/bin
 # Build slurm-smd-client package
 RUN cd /usr/src/slurm-${SLURM_VERSION} && \
     sed -i 's/--with-pmix\b/--with-pmix=\/usr\/lib\/aarch64-linux-gnu\/pmix2/' debian/rules && \
+    sed -i 's/--with-mysql_config\b/--with-mysql_config=\/usr\/bin\/mysql_config/' debian/rules && \
+    sed -i 's|--libdir=\${prefix}/lib/.*|--libdir=\${prefix}/lib/aarch64-linux-gnu|' debian/rules && \
     mk-build-deps -i debian/control -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" && \
-    debuild -b -uc -us
+    MAKEFLAGS="-j2" debuild -b -uc -us
 
-################################################################
-# RESULT
-################################################################
-# /usr/src/slurm-smd-client_24.05.5-1_arm64.deb
-################################################################
-
+# Collect the resulting package
 RUN mkdir /usr/src/debs && \
     mv /usr/src/slurm-smd-client_*.deb /usr/src/debs/
