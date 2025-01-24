@@ -58,58 +58,17 @@ RUN cd /etc/apt/sources.list.d && \
 ENV LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/targets/x86_64-linux/lib:/usr/mpi/gcc/openmpi-${OPENMPI_VERSION}/lib
 ENV PATH=$PATH:/usr/mpi/gcc/openmpi-${OPENMPI_VERSION}/bin
 
-# Build deb packages for Slurm
+# Build slurm-smd-client package
 RUN cd /usr/src/slurm-${SLURM_VERSION} && \
     sed -i 's/--with-pmix\b/--with-pmix=\/usr\/lib\/aarch64-linux-gnu\/pmix2/' debian/rules && \
     mk-build-deps -i debian/control -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" && \
-    debuild -b -uc -us
+    debuild -b -uc -us --binary-only slurm-smd-client
 
 ################################################################
 # RESULT
 ################################################################
-# /usr/src/slurm-smd-client_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-dev_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-doc_24.05.02-1_all.deb
-# /usr/src/slurm-smd-libnss-slurm_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-libpam-slurm-adopt_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-libpmi0_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-libpmi2-0_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-libslurm-perl_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-openlava_24.05.02-1_all.deb
-# /usr/src/slurm-smd-sackd_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-slurmctld_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-slurmd_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-slurmdbd_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-slurmrestd_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-sview_24.05.02-1_amd64.deb
-# /usr/src/slurm-smd-torque_24.05.02-1_all.deb
-# /usr/src/slurm-smd_24.05.02-1_amd64.deb
+# /usr/src/slurm-smd-client_24.05.5-1_amd64.deb
 ################################################################
 
-RUN cd /usr/src && \
-    git clone https://github.com/NVIDIA/nccl-tests.git && \
-    cd nccl-tests && \
-    make
-
-################################################################
-# RESULT
-################################################################
-# /usr/src/nccl-tests/build/all_gather_perf
-# /usr/src/nccl-tests/build/all_reduce_perf
-# /usr/src/nccl-tests/build/alltoall_perf
-# /usr/src/nccl-tests/build/broadcast_perf
-# /usr/src/nccl-tests/build/gather_perf
-# /usr/src/nccl-tests/build/hypercube_perf
-# /usr/src/nccl-tests/build/reduce_perf
-# /usr/src/nccl-tests/build/reduce_scatter_perf
-# /usr/src/nccl-tests/build/scatter_perf
-# /usr/src/nccl-tests/build/sendrecv_perf
-################################################################
-
-# Move deb files
 RUN mkdir /usr/src/debs && \
-    mv /usr/src/*.deb /usr/src/debs/
-
-# Create tar.gz archive with NCCL-tests binaries
-RUN cd /usr/src/nccl-tests/build && \
-    tar -czvf nccl-tests-perf.tar.gz *_perf
+    mv /usr/src/slurm-smd-client_*.deb /usr/src/debs/
