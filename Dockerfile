@@ -1,35 +1,10 @@
-ARG BASE_IMAGE=nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+ARG BASE_IMAGE=jsfillman/slurm-deb-base-mini
+# ARG BASE_IMAGE=nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 
 FROM $BASE_IMAGE
 
 ARG SLURM_VERSION=24.05.5
 ARG DEBIAN_FRONTEND=noninteractive
-
-# Install minimal dependencies
-RUN apt-get update && \
-    apt -y --no-install-recommends install \
-        git \
-        build-essential \
-        devscripts \
-        debhelper \
-        fakeroot \
-        wget \
-        equivs \
-        libssl-dev:arm64 \
-        libpam0g-dev:arm64 \
-        libtool \
-        libjansson-dev:arm64 \
-        libjson-c-dev:arm64 \
-        munge \
-        libmunge-dev \
-        libjwt0:arm64 \
-        libjwt-dev:arm64 \
-        libhwloc-dev:arm64 \
-        liblz4-dev:arm64 \
-        flex \
-        libevent-dev:arm64 \
-        zlib1g-dev:arm64 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Download Slurm source code
 RUN cd /usr/src && \
