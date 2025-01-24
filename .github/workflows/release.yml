@@ -10,7 +10,6 @@ jobs:
   build:
     permissions:
       contents: write  # for softprops/action-gh-release to create GitHub release
-    runs-on: self-hosted
 
     strategy:
       fail-fast: false
