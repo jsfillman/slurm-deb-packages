@@ -6,26 +6,37 @@ FROM $BASE_IMAGE
 ARG SLURM_VERSION=24.05.5
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Download Slurm source code
+# Download Slurm
 RUN cd /usr/src && \
     wget https://download.schedmd.com/slurm/slurm-${SLURM_VERSION}.tar.bz2 && \
     tar -xvf slurm-${SLURM_VERSION}.tar.bz2 && \
     rm -rf slurm-${SLURM_VERSION}.tar.bz2
 
-# Prepare for building slurm-smd-client only
+# Install Openmpi
+RUN cd /etc/apt/sources.list.d && \
+    wget https://linux.mellanox.com/public/repo/mlnx_ofed/${OFED_VERSION}/$(. /etc/os-release; echo $ID$VERSION_ID)/mellanox_mlnx_ofed.list && \
+    wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+    apt update && \
+    apt install openmpi=${OPENMPI_VERSION}-${OPENMPI_SUBVERSION}
+
+ENV LD_LIBRARY_PATH=/lib/aarch64-linux-gnu:/usr/lib/aarch64-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/targets/aarch64-linux/lib:/usr/mpi/gcc/openmpi-${OPENMPI_VERSION}/lib
+ENV PATH=$PATH:/usr/mpi/gcc/openmpi-${OPENMPI_VERSION}/bin
+
+# Build deb packages for Slurm
 RUN cd /usr/src/slurm-${SLURM_VERSION} && \
     sed -i 's/--with-pmix\b/--with-pmix=\/usr\/lib\/aarch64-linux-gnu\/pmix2/' debian/rules && \
-    sed -i 's/-flto=auto//g' debian/rules && \
-    sed -i 's/-g -O2/-O2/' debian/rules && \
-    dpkg --add-architecture arm64 && apt-get update && \
-    mk-build-deps -i debian/control -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" || \
-    (echo \"mk-build-deps failed\" && cat /var/log/apt/term.log && exit 1)
+    mk-build-deps -i debian/control -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" && \
+    debuild -b -uc -us
 
-# Build only slurm-smd-client package
-RUN cd /usr/src/slurm-${SLURM_VERSION} && \
-    MAKEFLAGS="-j1" dpkg-buildpackage -us -uc -ui -b --target=binary-arch
+RUN cd /usr/src && \
+    git clone https://github.com/NVIDIA/nccl-tests.git && \
+    cd nccl-tests && \
+    make
 
-# Move the resulting deb package
+# Move deb files
 RUN mkdir /usr/src/debs && \
-    mv /usr/src/slurm-smd-client_*.deb /usr/src/debs/
+    mv /usr/src/*.deb /usr/src/debs/
 
+# Create tar.gz archive with NCCL-tests binaries
+RUN cd /usr/src/nccl-tests/build && \
+    tar -czvf nccl-tests-perf.tar.gz *_perf
