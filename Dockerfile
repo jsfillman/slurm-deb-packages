@@ -11,7 +11,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
 RUN apt-get update && \
-    apt -y install \
+    apt -y --no-install-recommends install \
         git  \
         build-essential \
         devscripts \
@@ -53,21 +53,21 @@ RUN cd /etc/apt/sources.list.d && \
     wget https://linux.mellanox.com/public/repo/mlnx_ofed/${OFED_VERSION}/$(. /etc/os-release; echo $ID$VERSION_ID)/mellanox_mlnx_ofed.list && \
     wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
     apt update && \
-    apt install openmpi=${OPENMPI_VERSION}-${OPENMPI_SUBVERSION}
+    apt install --no-install-recommends openmpi=${OPENMPI_VERSION}-${OPENMPI_SUBVERSION}
 
-ENV LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/targets/x86_64-linux/lib:/usr/mpi/gcc/openmpi-${OPENMPI_VERSION}/lib
+ENV LD_LIBRARY_PATH=/lib/aarch64-linux-gnu:/usr/lib/aarch64-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/targets/aarch64-linux/lib:/usr/mpi/gcc/openmpi-${OPENMPI_VERSION}/lib
 ENV PATH=$PATH:/usr/mpi/gcc/openmpi-${OPENMPI_VERSION}/bin
 
 # Build slurm-smd-client package
 RUN cd /usr/src/slurm-${SLURM_VERSION} && \
     sed -i 's/--with-pmix\b/--with-pmix=\/usr\/lib\/aarch64-linux-gnu\/pmix2/' debian/rules && \
     mk-build-deps -i debian/control -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" && \
-    debuild -b -uc -us slurm-smd-client
+    debuild -b -uc -us
 
 ################################################################
 # RESULT
 ################################################################
-# /usr/src/slurm-smd-client_24.05.5-1_amd64.deb
+# /usr/src/slurm-smd-client_24.05.5-1_arm64.deb
 ################################################################
 
 RUN mkdir /usr/src/debs && \
