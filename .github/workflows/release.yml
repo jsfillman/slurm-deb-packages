@@ -20,7 +20,7 @@ jobs:
         image:
           - context: .
             push: false
-            platforms: linux/amd64
+            platforms: linux/arm64
             load: true
             ubuntu_version: jammy
             cuda_version: 12.4.1
